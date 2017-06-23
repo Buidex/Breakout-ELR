@@ -123,16 +123,16 @@ int main( int argc, char* args[] ) {
         else {   
             /*Cria os NPCs*/
             bola = criaBOLA(rand() % (SCREEN_WIDTH - BALL_WIDTH), 
-                             rand() % (SCREEN_HEIGHT - BALL_HEIGHT), 
-                             VELOCIDADE_INIC_BOLA, 
-                             VELOCIDADE_INIC_BOLA,
-                             gBALLSurface);
+                            rand() % (SCREEN_HEIGHT - BALL_HEIGHT), 
+                            VELOCIDADE_INIC_BOLA, 
+                            VELOCIDADE_INIC_BOLA,
+                            gBALLSurface);
            
             
             plataforma = criaPLATAFORMA(((SCREEN_WIDTH/2) - (PADDLE_WIDTH/2)),
-									(SCREEN_HEIGHT - 2*PADDLE_HEIGHT ),
-									VELOCIDADE_JOGADOR,
-									gPADDLESurface);
+					 (SCREEN_HEIGHT - 2*PADDLE_HEIGHT),
+					  VELOCIDADE_JOGADOR,
+					  gPADDLESurface);
 			
 			gVidas = NUM_VIDAS;
              
