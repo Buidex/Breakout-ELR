@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
-#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_ttf.h>
 
 
 /* Constants*/
@@ -50,9 +50,18 @@ SDL_Surface* surfaceMEC = NULL;
 	/*Superficie contida na tela da janela do jogo*/
 SDL_Surface* surfaceJogo = NULL;
 
+	/*Superficie do texto mostrando os recordes*/
+SDL_Surface* textoRecordes = NULL;
+
 	/*As músicas que serão utilizadas*/
 Mix_Music *gMandela = NULL;
 Mix_Music *gBaile = NULL;
+
+	/*A fonte de texto a ser utilizada*/
+TTF_Font *font = NULL;	
+
+	/*A cor da fonte de texto a ser utilizada*/
+SDL_Color corPreta = {0,0,0};
 
 /* Function Prototypes*/
 
@@ -65,8 +74,14 @@ int loadMedias();
 	/*Carrega áudios e músicas*/
 int loadAudio();
 
+	/*Carrega fontes*/
+int loadFont();
+
 	/*Libera as midias e encerra o SDL*/
 void closing();
+
+	/*Superficie da fonte de texto*/
+SDL_Surface* TTF_RenderText_Solid(TTF_Font *font, const char *text, SDL_Color fg);
 
 	/*Busca a imagem no diretorio */
 SDL_Surface* loadSurface(char *path);
@@ -100,6 +115,11 @@ int main(int argc, char* args[]){
 		if(!loadAudio()){
 			printf("Falha ao carregar os áudios!\n");
 		}
+		
+		if(!loadFont()){
+			printf("Falha ao carregar as fontes!\n");
+		}
+		
 		else{
 			imagemJogar = criarImagem((SCREEN_WIDTH-520), (SCREEN_HEIGHT-435), surfaceJOGAR);
 			imagemCreditos = criarImagem((SCREEN_WIDTH-520), (SCREEN_HEIGHT-335), surfaceCREDITOS);
@@ -216,13 +236,25 @@ int main(int argc, char* args[]){
 										srcRect.h = 360;
 										dstRect.x = imagemMEC.posX;
 										dstRect.y = imagemMEC.posY;
+									
                 
 										if(SDL_BlitSurface( imagemMEC.imagem, &srcRect, 
 											surfaceJogo, &dstRect ) < 0 ) {
 											printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 											quit = true;
-										}	
-									
+										}
+										
+										textoRecordes = TTF_RenderText_Solid(font, "RESPEITA A MINHA HISTORIA PORRA", corPreta);
+										if(!textoRecordes) {
+											printf("Erro ao renderizar a fonte! SDL_TTF Error: %s\n", TTF_GetError());
+											quit = false;
+										} 
+										else {
+											if(SDL_BlitSurface(textoRecordes,NULL,surfaceJogo,NULL)){
+												printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+												quit = true;
+											}
+										}
 									}
 								}
                             
@@ -263,6 +295,11 @@ int init(){
         printf("SDL não pode ser inicializado! SDL Error: %s\n", SDL_GetError());
         success = false;
     }
+    if(TTF_Init() < 0) {
+		printf("TTF não pode ser iniciado! SDL_TTF Error: %s\n", TTF_GetError());
+		success = false;
+	}
+	
     else 
     {
         /*Cria a janela inicial*/
@@ -353,6 +390,19 @@ int loadAudio() {
 	return success;
 }
 
+int loadFont() {
+	/*Variavel de controle do carregamento de fontes de texto*/
+	int success = true;
+
+	font = TTF_OpenFont("ubuntu.medium.ttf", 24);
+	if(!font) {
+		printf("TTF_OpenFont: %s\n", TTF_GetError());
+		success = false;
+	}
+
+	return success;
+}
+
 void closing() {
     /*Libera a memória das imagens carregadas*/
     SDL_FreeSurface( surfaceJOGAR );
@@ -370,9 +420,20 @@ void closing() {
     SDL_FreeSurface( surfaceMEC );
     surfaceMEC = NULL;
     
+    /*Libera a memória das fontes carregadas*/
+	SDL_FreeSurface(textoRecordes);
+	textoRecordes = NULL;
+    
     /*Libera a memória das músicas carregadas*/ 
-    Mix_FreeMusic( gMandela ); gMandela = NULL; 
-    Mix_FreeMusic( gBaile ); gBaile = NULL; 
+    Mix_FreeMusic( gMandela ); 
+    gMandela = NULL; 
+    
+    Mix_FreeMusic( gBaile ); 
+    gBaile = NULL; 
+    
+    /*Libera a memória das fontes carregadas*/ 
+    TTF_CloseFont(font); 
+    font = NULL;
 	
     /*Destroi as janelas*/
     SDL_DestroyWindow( telaInicial );
