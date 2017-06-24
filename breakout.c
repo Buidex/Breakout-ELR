@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <time.h>
 
+#define NUM_LINHAS 5
+#define NUM_COLUNAS 10
+#define NUM_BLOCOS 40
+
 /* Define o tipo bool */
 typedef int bool;
 
@@ -23,12 +27,16 @@ const int BALL_WIDTH = 22;
 const int BALL_HEIGHT = 22;
 const int PADDLE_WIDTH = 104;
 const int PADDLE_HEIGHT = 24;
+const int BLOCK_WIDTH = 80;
+const int BLOCK_HEIGHT = 40;
 
 /*Constantes de jogo*/
 const int NUM_VIDAS = 5;
-const int VELOCIDADE_JOGADOR = 4;
+
+const int DIST_BLOCO_TELA = 80;
+const int VELOCIDADE_JOGADOR = 3;
 const int VELOCIDADE_INIC_BOLA = 2;
-const int VELOCIDADE_MAX_BOLA = 4;
+const int VELOCIDADE_MAX_BOLA = 3;
 const int FATOR_VELOCIDADE = 5;
 
 /*Estruturas*/
@@ -55,13 +63,27 @@ typedef struct _PADDLE {
 	int imgH;
 } PADDLE;
 
+/*BLOCO*/
+typedef struct _BLOCK {
+	int posX;
+	int posY;
+	int vidas;
+	SDL_Surface* image;
+	int imgW;
+	int imgH;
+} BLOCK;
+
 /* Variaveis globais */
 
+int gLevel = 1;
 int gVidas;
+int gNumBlocos = 0;
 int gVelMinBola; /*sem uso ainda*/
 int gVelMaxBola; /*sem uso ainda*/
 int gTeclaDir;
-int gTeclaEsq; 
+int gTeclaEsq;
+
+BLOCK gBlocos[NUM_BLOCOS];
 
 /*A janela em que estaremos renderizando*/
 SDL_Window* gWindow = NULL;
@@ -76,6 +98,7 @@ SDL_Surface* gScreenSurface = NULL;
 /*Imagem JPEG atualmente exibida*/
 SDL_Surface* gBALLSurface = NULL;
 SDL_Surface* gPADDLESurface = NULL;
+SDL_Surface* gBLOCKSurface = NULL;
 
 /*
  * Prototipos de funcao
@@ -92,6 +115,9 @@ void closing();
 
 /*Carrega uma imagem individual*/
 SDL_Surface* loadSurface( char *path );
+
+/*Cria os blocos*/
+void criaBlocos(BLOCK *gBlocos);
 
 /*Cria NPC*/
 BALL criaBOLA( int posX, int posY, int velX, int velY, SDL_Surface *image);
@@ -120,26 +146,27 @@ int main( int argc, char* args[] ) {
         if( !loadMedia() ) {
             printf( "Falha ao carregar midia!\n" );
         }
-        else {   
+        else {
+			
             /*Cria os NPCs*/
             bola = criaBOLA(rand() % (SCREEN_WIDTH - BALL_WIDTH), 
-                            rand() % (SCREEN_HEIGHT - BALL_HEIGHT), 
-                            VELOCIDADE_INIC_BOLA, 
-                            VELOCIDADE_INIC_BOLA,
-                            gBALLSurface);
+                             rand() % (SCREEN_HEIGHT - BALL_HEIGHT), 
+                             VELOCIDADE_INIC_BOLA, 
+                             VELOCIDADE_INIC_BOLA,
+                             gBALLSurface);
            
             
             plataforma = criaPLATAFORMA(((SCREEN_WIDTH/2) - (PADDLE_WIDTH/2)),
-					 (SCREEN_HEIGHT - 2*PADDLE_HEIGHT),
-					  VELOCIDADE_JOGADOR,
-					  gPADDLESurface);
+									(SCREEN_HEIGHT - 2*PADDLE_HEIGHT ),
+									VELOCIDADE_JOGADOR,
+									gPADDLESurface);
 			
 			gVidas = NUM_VIDAS;
              
             /*Flag do loop principal*/
             quit = false;
 
-            /*Enquanto estiver em execucao*/
+            /*Enquanto estiver em execucao*/           
             while( !quit ) {
 				while( SDL_PollEvent( &e ) != 0 ) {
 					switch (e.type) {
@@ -176,7 +203,9 @@ int main( int argc, char* args[] ) {
 				SDL_FillRect( gScreenSurface, NULL, 
 							  SDL_MapRGB( gScreenSurface->format, 
 							  0xFF, 0xFF, 0xFF ) );
-
+				
+				criaBlocos(gBlocos);
+				
 				/*Move os NPCs*/
 				moveBALL(&bola);
 				movePADDLE(&plataforma);
@@ -205,11 +234,13 @@ int main( int argc, char* args[] ) {
 					quit = true;
 				}
 				
+				/*criaBlocos(gBlocos);*/
+				
 				/*Atualiza a superficie*/
 				SDL_UpdateWindowSurface( gWindow );
 					
 				/*Adiciona um delay para desacelerar a execucao do programa*/
-				SDL_Delay(10);
+				SDL_Delay(5);
 			}
         }
     }
@@ -285,7 +316,7 @@ bool colisaoBolaPlat( BALL a, PADDLE b ) {
 }
 
 /*Cria NPCs*/
-BALL criaBOLA( int posX, int posY, int velX, int velY, SDL_Surface *image) {
+BALL criaBOLA( int posX, int posY, int velX, int velY, SDL_Surface *image ) {
 	
     BALL p;
     
@@ -298,7 +329,7 @@ BALL criaBOLA( int posX, int posY, int velX, int velY, SDL_Surface *image) {
     return p;
 }
 
-PADDLE criaPLATAFORMA( int posX, int posY, int velX, SDL_Surface *image) {
+PADDLE criaPLATAFORMA( int posX, int posY, int velX, SDL_Surface *image ) {
 	
     PADDLE p;
     
@@ -351,9 +382,9 @@ int loadMedia() {
     /*Carrega a superficie JPEG*/
     gBALLSurface = loadSurface( "./ballBlue.png" );
     gPADDLESurface = loadSurface( "./paddleRed.png" );
-
+    gBLOCKSurface = loadSurface( "./element_red_rectangle.png" );
 	
-    if( gBALLSurface == NULL || gPADDLESurface == NULL ) {
+    if( gBALLSurface == NULL || gPADDLESurface == NULL || gBLOCKSurface == NULL ) {
         printf( "Falha ao carregar imagem! SDL Error: %s\n", SDL_GetError() );
         success = false;
     } 
@@ -366,6 +397,8 @@ void closing() {
     gBALLSurface = NULL;
     SDL_FreeSurface ( gPADDLESurface );
     gPADDLESurface = NULL;
+    SDL_FreeSurface ( gBLOCKSurface );
+    gBLOCKSurface = NULL;
 
     /*Destroi a janela*/
     SDL_DestroyWindow( gWindow );
@@ -402,3 +435,39 @@ SDL_Surface* loadSurface( char *path ) {
 
     return optimizedSurface;
 }
+
+void criaBlocos(BLOCK *gBlocos) {
+	
+	SDL_Rect srcRectBlock, dstRectBlock;
+	int lin, col;
+	int i = 0;
+	
+	for (lin = 1; lin <= NUM_LINHAS; lin++) {
+		for (col = 1; col <= NUM_COLUNAS; col++) {
+			
+			gBlocos[i].image = gBLOCKSurface;
+			gBlocos[i].vidas = 1;
+			srcRectBlock.x = 0; srcRectBlock.y = 0;
+			gBlocos[i].posX = dstRectBlock.x = col*BLOCK_WIDTH - DIST_BLOCO_TELA;
+			gBlocos[i].posY = dstRectBlock.y = lin*BLOCK_HEIGHT - DIST_BLOCO_TELA/2;
+			gBlocos[i].imgW = srcRectBlock.w = BLOCK_WIDTH;
+			gBlocos[i].imgH = srcRectBlock.h = BLOCK_HEIGHT;
+			/*printf("Passei aqui!\n");*/
+			if( SDL_BlitSurface( gBlocos[i].image, &srcRectBlock, 
+								 gScreenSurface, &dstRectBlock ) < 0 ) {
+					printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+			i++;
+			}
+		}
+	}
+}
+					
+			/*gBLOCOS[lin][col].posX = col*BLOCK_WIDTH - DIST_BLOCO_TELA;
+			gBLOCOS[lin][col].posY = lin*BLOCK_HEIGHT + DIST_BLOCO_TELA;
+			gBLOCOS[lin][col].imgW = BLOCK_WIDTH;
+			gBLOCOS[lin][col].imgH = BLOCK_HEIGHT;
+			gBLOCOS[lin][col].*/
+	
+	
+	
+	
