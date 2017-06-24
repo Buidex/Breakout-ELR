@@ -9,6 +9,7 @@
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
 
+#define MAX 80
 
 /* Constants*/
 
@@ -19,6 +20,8 @@ const int false = 0;
 const int true = 1;
 
 int x, y;
+
+char jogador1[MAX],jogador2[MAX],jogador3[MAX],jogador4[MAX],jogador5[MAX],placar1[MAX],placar2[MAX],placar3[MAX],placar4[MAX],placar5[MAX];
 
 typedef struct _IMAGEM{
 	int posX;
@@ -53,6 +56,9 @@ SDL_Surface* surfaceJogo = NULL;
 	/*Superficie do texto mostrando os recordes*/
 SDL_Surface* textoRecordes = NULL;
 
+	/*Superficie do texto avisando de M*/
+SDL_Surface* tirarMus = NULL;
+
 	/*As músicas que serão utilizadas*/
 Mix_Music *gMandela = NULL;
 Mix_Music *gBaile = NULL;
@@ -80,6 +86,9 @@ int loadFont();
 	/*Libera as midias e encerra o SDL*/
 void closing();
 
+	/*Lê o arquivo dos recordes*/
+int leituraRecordes();
+
 	/*Superficie da fonte de texto*/
 SDL_Surface* TTF_RenderText_Solid(TTF_Font *font, const char *text, SDL_Color fg);
 
@@ -87,7 +96,7 @@ SDL_Surface* TTF_RenderText_Solid(TTF_Font *font, const char *text, SDL_Color fg
 SDL_Surface* loadSurface(char *path);
 
 	/*Cria o perfil das imagens*/
-IMAGENS imagemJogar, imagemCreditos, imagemRecordes, imagemMEC;
+IMAGENS imagemJogar, imagemCreditos, imagemRecordes, imagemMEC, imagemTirarMus;
 
 	/*Cria a imagem na tela com uma posição definida*/
 IMAGENS criarImagem(int posX, int posY, SDL_Surface* imagem);
@@ -124,6 +133,7 @@ int main(int argc, char* args[]){
 			imagemJogar = criarImagem((SCREEN_WIDTH-520), (SCREEN_HEIGHT-435), surfaceJOGAR);
 			imagemCreditos = criarImagem((SCREEN_WIDTH-520), (SCREEN_HEIGHT-335), surfaceCREDITOS);
 			imagemRecordes = criarImagem((SCREEN_WIDTH-520), (SCREEN_HEIGHT-235), surfaceRECORDES);
+			
 			Mix_PlayMusic( gBaile, -1 );
 			
 			/*Variavel de controle do loop principal*/
@@ -166,7 +176,28 @@ int main(int argc, char* args[]){
                                      surfaceInicial, &dstRect ) < 0 ) {
                     printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
                     quit = true;
-                }	
+                }
+                
+                srcRect.x = -170; srcRect.y = -100;
+                srcRect.w = SCREEN_WIDTH;
+                srcRect.h = 232;
+                dstRect.x = imagemTirarMus.posX;
+                dstRect.y = imagemTirarMus.posY;
+                
+                tirarMus = TTF_RenderText_Solid(font, "Aperte M para ligar ou desligar a musica.", corPreta);
+				imagemTirarMus = criarImagem((SCREEN_WIDTH-620), (SCREEN_HEIGHT-535), tirarMus);
+				if(!tirarMus) {
+					printf("Erro ao renderizar a fonte! SDL_TTF Error: %s\n", TTF_GetError());
+					quit = false;
+				} 
+				
+                
+				else {
+					if(SDL_BlitSurface(imagemTirarMus.imagem,&srcRect,surfaceInicial,&dstRect)){
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+						quit = true;
+					}
+				}
 			
 			/*Enquanto o programa esta rodando (enquanto o valor de 'quit' for falso/0)*/
             while(!quit) {
@@ -181,23 +212,47 @@ int main(int argc, char* args[]){
                             if (sair.key.keysym.sym == SDLK_ESCAPE) {
                                 quit = true;
                             }
-                            /*if(sair.key.keysym.sym == SDLK_9){
-								If there is no music playing 
+                            if(sair.key.keysym.sym == SDLK_m){
+								
 								if( Mix_PlayingMusic() == 0 ) { 
-									Play the music 
-									Mix_PlayMusic( gMusic, -1 ); 
+									
+									Mix_PlayMusic( gMandela, -1 ); 
+									Mix_PlayMusic( gBaile, -1 ); 
 								} 
-								If music is being played
+								
 								else { 
-								If the music is paused
+								
 									if( Mix_PausedMusic() == 1 ) 
 									{ 
-										Resume the music
+										
 										Mix_ResumeMusic(); 
 									} 
-										If the music is playing
+										
 									else { 
-										Pause the music
+										
+										Mix_PauseMusic(); 
+									} 
+								} 
+							}
+							
+							/*if(sair.key.keysym.sym == SDLK_s){
+								
+								if( Mix_PlayingMusic() == 0 ) { 
+									
+									Mix_PlayMusic( gMandela, -1 ); 
+									Mix_PlayMusic( gBaile, -1 ); 
+								} 
+								
+								else { 
+								
+									if( Mix_PausedMusic() == 1 ) 
+									{ 
+										
+										Mix_ResumeMusic(); 
+									} 
+										
+									else { 
+										
 										Mix_PauseMusic(); 
 									} 
 								} 
@@ -236,7 +291,6 @@ int main(int argc, char* args[]){
 										srcRect.h = 360;
 										dstRect.x = imagemMEC.posX;
 										dstRect.y = imagemMEC.posY;
-									
                 
 										if(SDL_BlitSurface( imagemMEC.imagem, &srcRect, 
 											surfaceJogo, &dstRect ) < 0 ) {
@@ -244,7 +298,11 @@ int main(int argc, char* args[]){
 											quit = true;
 										}
 										
-										textoRecordes = TTF_RenderText_Solid(font, "RESPEITA A MINHA HISTORIA PORRA", corPreta);
+										
+										
+										leituraRecordes();
+										
+										/*textoRecordes = TTF_RenderText_Solid(font, "RESPEITA A MINHA HISTORIA PORRA", corPreta);
 										if(!textoRecordes) {
 											printf("Erro ao renderizar a fonte! SDL_TTF Error: %s\n", TTF_GetError());
 											quit = false;
@@ -254,7 +312,7 @@ int main(int argc, char* args[]){
 												printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 												quit = true;
 											}
-										}
+										}*/
 									}
 								}
                             
@@ -423,6 +481,10 @@ void closing() {
     /*Libera a memória das fontes carregadas*/
 	SDL_FreeSurface(textoRecordes);
 	textoRecordes = NULL;
+	
+	/*Libera a memória das fontes carregadas*/
+	SDL_FreeSurface(tirarMus);
+	tirarMus = NULL;
     
     /*Libera a memória das músicas carregadas*/ 
     Mix_FreeMusic( gMandela ); 
@@ -467,4 +529,78 @@ SDL_Surface* loadSurface( char *path ) {
     }
 
     return optimizedSurface;
+}
+
+int leituraRecordes(){
+	/*Variavel de controle do carregamento de fontes de texto*/
+	int success = true;
+	
+	FILE *pfile = fopen("recordes.txt", "r");
+	if (pfile == NULL){
+		printf("Arquivo não pode ser aberto");
+		success = false;
+	}
+		
+	fgets(jogador1, MAX, pfile);
+	printf("1 - ");
+	puts(jogador1);
+	fgets(placar1, MAX, pfile);
+	printf("Placar: ");
+	puts(placar1);
+	
+	fgets(jogador2, MAX, pfile);
+	printf("2 - ");
+	puts(jogador2);
+	fgets(placar2, MAX, pfile);
+	printf("Placar: ");
+	puts(placar2);
+	
+	fgets(jogador3, MAX, pfile);
+	printf("3 - ");
+	puts(jogador3);
+	fgets(placar3, MAX, pfile);
+	printf("Placar: ");
+	puts(placar3);	
+	
+	fgets(jogador4, MAX, pfile);
+	printf("4 - ");
+	puts(jogador4);
+	fgets(placar4, MAX, pfile);
+	printf("Placar: ");
+	puts(placar4);
+	
+	fgets(jogador5, MAX, pfile);
+	printf("5 - ");
+	puts(jogador5);
+	fgets(placar5, MAX, pfile);
+	printf("Placar: ");
+	puts(placar5);
+
+	textoRecordes = TTF_RenderText_Solid(font, jogador1, corPreta);
+	if(!textoRecordes) {
+		printf("Erro ao renderizar a fonte! SDL_TTF Error: %s\n", TTF_GetError());
+		success = false;
+	} 
+	else {
+		if(SDL_BlitSurface(textoRecordes,NULL,surfaceJogo,NULL)){
+			printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+			success = true;
+		}
+	}
+	
+	textoRecordes = TTF_RenderText_Solid(font, placar1, corPreta);
+	if(!textoRecordes) {
+		printf("Erro ao renderizar a fonte! SDL_TTF Error: %s\n", TTF_GetError());
+		success = false;
+	} 
+	else {
+		if(SDL_BlitSurface(textoRecordes,NULL,surfaceJogo,NULL)){
+			printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+			success = true;
+		}
+	}
+	
+	fclose(pfile);
+	
+	return success;
 }
