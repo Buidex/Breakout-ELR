@@ -234,8 +234,6 @@ int main( int argc, char* args[] ) {
 					quit = true;
 				}
 				
-				/*criaBlocos(gBlocos);*/
-				
 				/*Atualiza a superficie*/
 				SDL_UpdateWindowSurface( gWindow );
 					
@@ -452,7 +450,6 @@ void criaBlocos(BLOCK *gBlocos) {
 			gBlocos[i].posY = dstRectBlock.y = lin*BLOCK_HEIGHT - DIST_BLOCO_TELA/2;
 			gBlocos[i].imgW = srcRectBlock.w = BLOCK_WIDTH;
 			gBlocos[i].imgH = srcRectBlock.h = BLOCK_HEIGHT;
-			/*printf("Passei aqui!\n");*/
 			if( SDL_BlitSurface( gBlocos[i].image, &srcRectBlock, 
 								 gScreenSurface, &dstRectBlock ) < 0 ) {
 					printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
@@ -461,13 +458,3 @@ void criaBlocos(BLOCK *gBlocos) {
 		}
 	}
 }
-					
-			/*gBLOCOS[lin][col].posX = col*BLOCK_WIDTH - DIST_BLOCO_TELA;
-			gBLOCOS[lin][col].posY = lin*BLOCK_HEIGHT + DIST_BLOCO_TELA;
-			gBLOCOS[lin][col].imgW = BLOCK_WIDTH;
-			gBLOCOS[lin][col].imgH = BLOCK_HEIGHT;
-			gBLOCOS[lin][col].*/
-	
-	
-	
-	
