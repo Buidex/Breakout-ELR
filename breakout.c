@@ -38,9 +38,6 @@ SDL_Surface* surfaceInicial = NULL;
 	/*Superficie da imagem "JOGAR"*/
 SDL_Surface* surfaceJOGAR = NULL;
 
-	/*Superficie da imagem "CRÉDITOS"*/
-SDL_Surface* surfaceCREDITOS = NULL;
-
 	/*Superficie da imagem "RECORDES"*/
 SDL_Surface* surfaceRECORDES = NULL;
 
@@ -49,6 +46,9 @@ SDL_Surface* surfaceMEC = NULL;
 
 	/*Superficie contida na tela da janela do jogo*/
 SDL_Surface* surfaceJogo = NULL;
+
+	/*Superficie contida na tela da janela dos recordes*/
+SDL_Surface* surfaceRecordes = NULL;
 
 	/*Superficie dos textos*/
 SDL_Surface* texto = NULL;
@@ -90,7 +90,7 @@ SDL_Surface* TTF_RenderText_Solid(TTF_Font *font, const char *text, SDL_Color fg
 SDL_Surface* loadSurface(char *path);
 
 	/*Cria o perfil das imagens*/
-IMAGENS imagemJogar, imagemCreditos, imagemRecordes, imagemMEC, imagemTexto;
+IMAGENS imagemJogar, imagemRecordes, imagemMEC, imagemTexto;
 
 	/*Cria a imagem na tela com uma posição definida*/
 IMAGENS criarImagem(int posX, int posY, SDL_Surface* imagem);
@@ -130,8 +130,7 @@ int main(int argc, char* args[]){
 		
 		else{
 			imagemJogar = criarImagem((SCREEN_WIDTH-520), (SCREEN_HEIGHT-435), surfaceJOGAR);
-			imagemCreditos = criarImagem((SCREEN_WIDTH-520), (SCREEN_HEIGHT-335), surfaceCREDITOS);
-			imagemRecordes = criarImagem((SCREEN_WIDTH-520), (SCREEN_HEIGHT-235), surfaceRECORDES);
+			imagemRecordes = criarImagem((SCREEN_WIDTH-520), (SCREEN_HEIGHT-335), surfaceRECORDES);
 			
 			Mix_PlayMusic( gBaile, -1 );
 			
@@ -156,18 +155,6 @@ int main(int argc, char* args[]){
                 srcRect.x = 0; srcRect.y = 0;
                 srcRect.w = 232;
                 srcRect.h = 232;
-                dstRect.x = imagemCreditos.posX;
-                dstRect.y = imagemCreditos.posY;
-                
-                if(SDL_BlitSurface( imagemCreditos.imagem, &srcRect, 
-                                     surfaceInicial, &dstRect ) < 0 ) {
-                    printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
-                    quit = true;
-                }	
-                
-                srcRect.x = 0; srcRect.y = 0;
-                srcRect.w = 232;
-                srcRect.h = 232;
                 dstRect.x = imagemRecordes.posX;
                 dstRect.y = imagemRecordes.posY;
                 
@@ -177,8 +164,84 @@ int main(int argc, char* args[]){
                     quit = true;
                 }
                                 
-                texto = TTF_RenderText_Solid(font, "Aperte M para ligar ou desligar a musica.", corPreta);
-				imagemTexto = criarImagem((SCREEN_WIDTH-620), (SCREEN_HEIGHT-485), texto);
+                texto = TTF_RenderText_Solid(font, "BREAKOUT FUNK", corPreta);
+				imagemTexto = criarImagem((SCREEN_WIDTH-507), (SCREEN_HEIGHT-500), texto);
+				
+                dstRect.x = imagemTexto.posX;
+                dstRect.y = imagemTexto.posY;
+				
+				if(!texto) {
+					printf("Erro ao renderizar a fonte! SDL_TTF Error: %s\n", TTF_GetError());
+					quit = false;
+				} 
+				
+                
+				else {
+					if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceInicial,&dstRect)){
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+						quit = true;
+					}
+				}
+				
+				texto = TTF_RenderText_Solid(font, "Comandos quando em jogo:", corPreta);
+				imagemTexto = criarImagem((SCREEN_WIDTH-670), (SCREEN_HEIGHT-215), texto);
+				
+                dstRect.x = imagemTexto.posX;
+                dstRect.y = imagemTexto.posY;
+				
+				if(!texto) {
+					printf("Erro ao renderizar a fonte! SDL_TTF Error: %s\n", TTF_GetError());
+					quit = false;
+				} 
+				
+                
+				else {
+					if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceInicial,&dstRect)){
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+						quit = true;
+					}
+				}
+				
+				texto = TTF_RenderText_Solid(font, "Aperte S para ligar ou desligar os sons do jogo.", corPreta);
+				imagemTexto = criarImagem((SCREEN_WIDTH-620), (SCREEN_HEIGHT-175), texto);
+				
+                dstRect.x = imagemTexto.posX;
+                dstRect.y = imagemTexto.posY;
+				
+				if(!texto) {
+					printf("Erro ao renderizar a fonte! SDL_TTF Error: %s\n", TTF_GetError());
+					quit = false;
+				} 
+				
+                
+				else {
+					if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceInicial,&dstRect)){
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+						quit = true;
+					}
+				}
+				
+				texto = TTF_RenderText_Solid(font, "Aperte M para ligar ou desligar a musica.", corPreta);
+				imagemTexto = criarImagem((SCREEN_WIDTH-620), (SCREEN_HEIGHT-135), texto);
+				
+                dstRect.x = imagemTexto.posX;
+                dstRect.y = imagemTexto.posY;
+				
+				if(!texto) {
+					printf("Erro ao renderizar a fonte! SDL_TTF Error: %s\n", TTF_GetError());
+					quit = false;
+				} 
+				
+                
+				else {
+					if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceInicial,&dstRect)){
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+						quit = true;
+					}
+				}
+				
+				texto = TTF_RenderText_Solid(font, "Grupo: MC's Elizeu Cappelli, Luiz Fernando Porto e Rodrigo Carvalho", corPreta);
+				imagemTexto = criarImagem((SCREEN_WIDTH-800), (SCREEN_HEIGHT-35), texto);
 				
                 dstRect.x = imagemTexto.posX;
                 dstRect.y = imagemTexto.posY;
@@ -295,21 +358,43 @@ int main(int argc, char* args[]){
 											quit = true;
 										}
 										
+										leituraRecordes();
 										
+									}
+								}
+								
+								if((x>SCREEN_WIDTH-520) && (x<SCREEN_WIDTH-520+222) && (y>SCREEN_HEIGHT-335) && (y<SCREEN_HEIGHT-335+62)){
+									printf("CLICOU EM CIMA DO 'RECORDES'\n");
+									/*Libera a memória das imagens carregadas*/
+									SDL_FreeSurface( surfaceJOGAR );
+									surfaceJOGAR = NULL;
+					
+									if( telaInicial == NULL ) {
+										printf("A janela da tela inicial nao pode ser criada! SDL Error: %s\n", SDL_GetError());
+										quit = false;
+									}
+									else {
+										/*Troco a superfície inicial para a superfície de Jogo e ativo todos os componentes dessa nova superfície*/
+										
+										/*Captura a superficie da janela da tela inicial*/
+										surfaceRecordes = SDL_GetWindowSurface(telaInicial);
+										SDL_FillRect (surfaceRecordes, NULL, SDL_MapRGB(surfaceRecordes ->format, 0xFF, 0xFF, 0XFF));
+										imagemMEC = criarImagem((SCREEN_WIDTH-630), (SCREEN_HEIGHT-485), surfaceMEC);
+										
+										srcRect.x = 0; srcRect.y = 0;
+										srcRect.w = 480;
+										srcRect.h = 360;
+										dstRect.x = imagemMEC.posX;
+										dstRect.y = imagemMEC.posY;
+                
+										if(SDL_BlitSurface( imagemMEC.imagem, &srcRect, 
+											surfaceRecordes, &dstRect ) < 0 ) {
+											printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+											quit = true;
+										}
 										
 										leituraRecordes();
 										
-										/*textoRecordes = TTF_RenderText_Solid(font, "RESPEITA A MINHA HISTORIA PORRA", corPreta);
-										if(!textoRecordes) {
-											printf("Erro ao renderizar a fonte! SDL_TTF Error: %s\n", TTF_GetError());
-											quit = false;
-										} 
-										else {
-											if(SDL_BlitSurface(textoRecordes,NULL,surfaceJogo,NULL)){
-												printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
-												quit = true;
-											}
-										}*/
 									}
 								}
                             
@@ -398,13 +483,7 @@ int loadMedias() {
         printf("Falha ao carregar a imagem de 'JOGAR'! SDL Error: %s\n", SDL_GetError());
         success = false;
     } 
-    /*Carrega a superficie da imagem de "CRÉDITOS"*/
-    surfaceCREDITOS = loadSurface("./CREDITOS.png");
-    SDL_SetColorKey(surfaceCREDITOS, SDL_TRUE, SDL_MapRGB(surfaceCREDITOS->format, 0xFF, 0xFF, 0XFF));
-    if(surfaceCREDITOS == NULL){
-        printf("Falha ao carregar a imagem de 'CREDITOS'! SDL Error: %s\n", SDL_GetError());
-        success = false;
-    } 
+
     /*Carrega a superficie da imagem de "RECORDES"*/
     surfaceRECORDES = loadSurface("./RECORDES.png");
     SDL_SetColorKey(surfaceRECORDES, SDL_TRUE, SDL_MapRGB(surfaceRECORDES->format, 0xFF, 0xFF, 0XFF));
@@ -462,11 +541,7 @@ void closing() {
     /*Libera a memória das imagens carregadas*/
     SDL_FreeSurface( surfaceJOGAR );
     surfaceJOGAR = NULL;
-    
-    /*Libera a memória das imagens carregadas*/
-    SDL_FreeSurface( surfaceCREDITOS );
-    surfaceCREDITOS = NULL;
-    
+     
     /*Libera a memória das imagens carregadas*/
     SDL_FreeSurface( surfaceRECORDES );
     surfaceRECORDES = NULL;
@@ -606,7 +681,7 @@ int leituraRecordes(){
 		success = false;
 	} 
 	else {
-		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceJogo,&dstRect)){
+		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceRecordes,&dstRect)){
 			printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 			success = true;
 		}
@@ -621,7 +696,7 @@ int leituraRecordes(){
 		success = false;
 	} 
 	else {
-		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceJogo,&dstRect)){
+		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceRecordes,&dstRect)){
 			printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 			success = true;
 		}
@@ -636,7 +711,7 @@ int leituraRecordes(){
 		success = false;
 	} 
 	else {
-		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceJogo,&dstRect)){
+		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceRecordes,&dstRect)){
 			printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 			success = true;
 		}
@@ -651,7 +726,7 @@ int leituraRecordes(){
 		success = false;
 	} 
 	else {
-		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceJogo,&dstRect)){
+		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceRecordes,&dstRect)){
 			printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 			success = true;
 		}
@@ -666,7 +741,7 @@ int leituraRecordes(){
 		success = false;
 	} 
 	else {
-		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceJogo,&dstRect)){
+		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceRecordes,&dstRect)){
 			printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 			success = true;
 		}
@@ -681,7 +756,7 @@ int leituraRecordes(){
 		success = false;
 	} 
 	else {
-		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceJogo,&dstRect)){
+		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceRecordes,&dstRect)){
 			printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 			success = true;
 		}
@@ -696,7 +771,7 @@ int leituraRecordes(){
 		success = false;
 	} 
 	else {
-		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceJogo,&dstRect)){
+		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceRecordes,&dstRect)){
 			printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 			success = true;
 		}
@@ -711,7 +786,7 @@ int leituraRecordes(){
 		success = false;
 	} 
 	else {
-		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceJogo,&dstRect)){
+		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceRecordes,&dstRect)){
 			printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 			success = true;
 		}
@@ -726,7 +801,7 @@ int leituraRecordes(){
 		success = false;
 	} 
 	else {
-		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceJogo,&dstRect)){
+		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceRecordes,&dstRect)){
 			printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 			success = true;
 		}
@@ -741,16 +816,11 @@ int leituraRecordes(){
 		success = false;
 	} 
 	else {
-		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceJogo,&dstRect)){
+		if(SDL_BlitSurface(imagemTexto.imagem,NULL,surfaceRecordes,&dstRect)){
 			printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 			success = true;
 		}
 	}
-
-
-
-
-
 	
 	fclose(pfile);
 	
