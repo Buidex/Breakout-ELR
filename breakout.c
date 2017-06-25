@@ -35,7 +35,6 @@ const int BLOCK_HEIGHT = 40;
 
 /*Constantes de jogo*/
 const int NUM_VIDAS = 5;
-
 const int DIST_BLOCO_TELA = 80;
 const int VELOCIDADE_JOGADOR = 7;
 const int VELOCIDADE_INIC_BOLA = 5;
@@ -77,7 +76,6 @@ typedef struct _BLOCK {
 } BLOCK;
 
 /* Variaveis globais */
-
 int gTimer;
 int gLevel = 1;
 int gPontos = 0;
