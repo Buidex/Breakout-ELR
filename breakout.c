@@ -5,9 +5,12 @@
 #include <stdio.h>
 #include <time.h>
 
-#define NUM_LINHAS 5
+#define NUM_LINHAS 4
 #define NUM_COLUNAS 10
 #define NUM_BLOCOS 40
+
+#define FRAMES_PER_SECOND 60
+#define FRAME_RATE 1000/FRAMES_PER_SECOND
 
 /* Define o tipo bool */
 typedef int bool;
@@ -34,9 +37,9 @@ const int BLOCK_HEIGHT = 40;
 const int NUM_VIDAS = 5;
 
 const int DIST_BLOCO_TELA = 80;
-const int VELOCIDADE_JOGADOR = 3;
-const int VELOCIDADE_INIC_BOLA = 2;
-const int VELOCIDADE_MAX_BOLA = 3;
+const int VELOCIDADE_JOGADOR = 7;
+const int VELOCIDADE_INIC_BOLA = 5;
+const int VELOCIDADE_MAX_BOLA = 6;
 const int FATOR_VELOCIDADE = 5;
 
 /*Estruturas*/
@@ -75,13 +78,15 @@ typedef struct _BLOCK {
 
 /* Variaveis globais */
 
+int gTimer;
 int gLevel = 1;
+int gPontos = 0;
 int gVidas;
-int gNumBlocos = 0;
 int gVelMinBola; /*sem uso ainda*/
 int gVelMaxBola; /*sem uso ainda*/
 int gTeclaDir;
 int gTeclaEsq;
+int gNumBlocos = 0;
 
 BLOCK gBlocos[NUM_BLOCOS];
 
@@ -119,6 +124,9 @@ SDL_Surface* loadSurface( char *path );
 /*Cria os blocos*/
 void criaBlocos(BLOCK *gBlocos);
 
+/*Gera os blocos*/
+void geraBlocos(BLOCK *gBlocos);
+
 /*Cria NPC*/
 BALL criaBOLA( int posX, int posY, int velX, int velY, SDL_Surface *image);
 PADDLE criaPLATAFORMA( int posX, int posY, int velX, SDL_Surface *image);
@@ -129,6 +137,14 @@ void movePADDLE(PADDLE *p); /*Move a plataforma*/
 
 /*Checa colisao entre a bola e a plataforma*/
 bool colisaoBolaPlat( BALL a, PADDLE b );
+
+/*Colisao entre bola e bloco*/
+bool colisaoBolaBlocoCima(BALL a, BLOCK *gBlocos);
+bool colisaoBolaBlocoBaixo(BALL a, BLOCK *gBlocos);
+bool colisaoBolaBlocoEsq(BALL a, BLOCK *gBlocos);
+bool colisaoBolaBlocoDir(BALL a, BLOCK *gBlocos);
+bool PontoNoBloco(int x, int y, int w, int z);
+void DeletaBloco(BLOCK *gBlocos, int index);
 
 int main( int argc, char* args[] ) {
 	
@@ -149,10 +165,10 @@ int main( int argc, char* args[] ) {
         else {
 			
             /*Cria os NPCs*/
-            bola = criaBOLA(rand() % (SCREEN_WIDTH - BALL_WIDTH), 
-                             rand() % (SCREEN_HEIGHT - BALL_HEIGHT), 
-                             VELOCIDADE_INIC_BOLA, 
-                             VELOCIDADE_INIC_BOLA,
+            bola = criaBOLA(((SCREEN_WIDTH/2) - (BALL_WIDTH/2)),
+                             ((SCREEN_WIDTH/2) - (BALL_HEIGHT/2)), 
+                             0, 
+                             0,
                              gBALLSurface);
            
             
@@ -161,6 +177,9 @@ int main( int argc, char* args[] ) {
 									VELOCIDADE_JOGADOR,
 									gPADDLESurface);
 			
+			
+			criaBlocos(gBlocos);
+			
 			gVidas = NUM_VIDAS;
              
             /*Flag do loop principal*/
@@ -168,6 +187,7 @@ int main( int argc, char* args[] ) {
 
             /*Enquanto estiver em execucao*/           
             while( !quit ) {
+				gTimer = SDL_GetTicks();
 				while( SDL_PollEvent( &e ) != 0 ) {
 					switch (e.type) {
 						case SDL_QUIT:
@@ -184,6 +204,11 @@ int main( int argc, char* args[] ) {
 								case SDLK_RIGHT:
 									gTeclaDir = 1;
 									break;
+								case SDLK_SPACE:
+									if (bola.velY == 0) {
+										bola.velY = VELOCIDADE_INIC_BOLA;
+									}
+									break;
 							}
 							break;
 						case SDL_KEYUP:
@@ -199,12 +224,12 @@ int main( int argc, char* args[] ) {
 					}
 				}
 				
-				/*Preenche a superficie de branco*/
+				/*Preenche a superficie de preto*/
 				SDL_FillRect( gScreenSurface, NULL, 
 							  SDL_MapRGB( gScreenSurface->format, 
-							  0xFF, 0xFF, 0xFF ) );
-				
-				criaBlocos(gBlocos);
+							  0, 0, 0 ) );
+							  
+				geraBlocos(gBlocos);
 				
 				/*Move os NPCs*/
 				moveBALL(&bola);
@@ -234,11 +259,15 @@ int main( int argc, char* args[] ) {
 					quit = true;
 				}
 				
+				geraBlocos(gBlocos);
+				
 				/*Atualiza a superficie*/
 				SDL_UpdateWindowSurface( gWindow );
 					
 				/*Adiciona um delay para desacelerar a execucao do programa*/
-				SDL_Delay(5);
+				if (FRAME_RATE > SDL_GetTicks() - gTimer) {
+					SDL_Delay(FRAME_RATE - (SDL_GetTicks() - gTimer));
+				}
 			}
         }
     }
@@ -264,8 +293,8 @@ void moveBALL(BALL *p) {
     }
     
     if ( p->posY + BALL_HEIGHT > SCREEN_HEIGHT ) {
-		p->velX = VELOCIDADE_INIC_BOLA;
-		p->velY = VELOCIDADE_INIC_BOLA;
+		p->velX = 0;
+		p->velY = 0;
 		p->posX = SCREEN_WIDTH/2 - BALL_WIDTH/2;
 		p->posY = SCREEN_HEIGHT/2 - BALL_HEIGHT/2;
 		gVidas--;
@@ -287,6 +316,25 @@ void moveBALL(BALL *p) {
 		p->velY = -p->velY;
 		p->posX += p->velX;
 		p->posY += p->velY;
+	}
+	
+	if (colisaoBolaBlocoCima(bola, gBlocos)) {
+		p->velY = -p->velY;
+		/*p->posY += BALL_WIDTH;*/
+	}
+		
+	if (colisaoBolaBlocoBaixo(bola, gBlocos)) {
+		p->velY = -p->velY;
+		/*p->posY -= BALL_WIDTH;*/
+	}
+	
+	if (colisaoBolaBlocoEsq(bola, gBlocos)) {
+		p->velX = -p->velX;
+		/*p->posX += BALL_WIDTH;*/
+	}
+	if (colisaoBolaBlocoDir(bola, gBlocos)) {
+		p->velX = -p->velX;
+		/*p->posX -= BALL_WIDTH;*/
 	}
 }			
 
@@ -338,13 +386,139 @@ PADDLE criaPLATAFORMA( int posX, int posY, int velX, SDL_Surface *image ) {
     return p;
 }
 
+void criaBlocos(BLOCK *gBlocos) {
+	
+	int lin, col;
+	int i = 0;
+	
+	for (lin = 1; lin <= NUM_LINHAS; lin++) {
+		for (col = 1; col <= NUM_COLUNAS; col++) {
+			
+			gBlocos[i].image = gBLOCKSurface;
+			gBlocos[i].vidas = 1;
+			gBlocos[i].posX = col*BLOCK_WIDTH - DIST_BLOCO_TELA;
+			gBlocos[i].posY = lin*BLOCK_HEIGHT - DIST_BLOCO_TELA/2;
+			gBlocos[i].imgW = BLOCK_WIDTH;
+			gBlocos[i].imgH = BLOCK_HEIGHT;
+
+			i++;
+			gNumBlocos++;
+		}
+	}
+}
+
+void geraBlocos(BLOCK *gBlocos) {
+	
+	SDL_Rect srcRectBlock, dstRectBlock;
+	int i;
+	
+	for (i = 0; i < gNumBlocos; i++) {
+			
+		srcRectBlock.x = 0; srcRectBlock.y = 0;
+		srcRectBlock.w = gBlocos[i].imgW;
+		srcRectBlock.h = gBlocos[i].imgH;
+		dstRectBlock.x = gBlocos[i].posX;
+		dstRectBlock.y = gBlocos[i].posY;
+				
+		if( SDL_BlitSurface( gBlocos[i].image, &srcRectBlock, 
+								gScreenSurface, &dstRectBlock ) < 0 ) {
+					printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+		}
+	}
+}
+
+bool colisaoBolaBlocoCima(BALL a, BLOCK *gBlocos) {
+	
+	int bloco, cima;
+	int cima_x = a.posX + BALL_WIDTH/2;
+	int cima_y = a.posY;
+	cima = false;
+	
+	for (bloco = 0; bloco < gNumBlocos; bloco++) {
+		if ( PontoNoBloco(cima_x, cima_y, gBlocos[bloco].posX, gBlocos[bloco].posY ) ) {	
+			cima = true;
+			DeletaBloco(gBlocos, bloco);
+		}
+	}
+	return cima;
+}
+
+bool colisaoBolaBlocoBaixo(BALL a, BLOCK *gBlocos) {
+	
+	int bloco, baixo;
+	int baixo_x = a.posX + BALL_WIDTH/2;
+	int baixo_y = a.posY + BALL_HEIGHT;
+	baixo = false;
+	
+	for (bloco = 0; bloco < gNumBlocos; bloco++) {
+		if ( PontoNoBloco(baixo_x, baixo_y, gBlocos[bloco].posX, gBlocos[bloco].posY ) ) {
+			baixo = true;
+			DeletaBloco(gBlocos, bloco);
+		}
+	}
+	return baixo;
+}
+
+bool colisaoBolaBlocoEsq(BALL a, BLOCK *gBlocos) {
+	
+	int bloco, esq;
+	int esq_x = a.posX;
+	int esq_y = a.posY + BALL_HEIGHT/2;
+	esq = false;
+	
+	for (bloco = 0; bloco < gNumBlocos; bloco++) {
+		if ( PontoNoBloco(esq_x, esq_y, gBlocos[bloco].posX, gBlocos[bloco].posY ) ) {
+			esq = true;
+			DeletaBloco(gBlocos, bloco);
+		}
+	}
+	return esq;
+}
+
+bool colisaoBolaBlocoDir(BALL a, BLOCK *gBlocos) {
+	
+	int bloco, dir;
+	int dir_x = a.posX + BALL_WIDTH;
+	int dir_y = a.posY + BALL_HEIGHT/2;
+	dir = false;
+	
+	for (bloco = 0; bloco < gNumBlocos; bloco++) {
+		if ( PontoNoBloco(dir_x, dir_y, gBlocos[bloco].posX, gBlocos[bloco].posY ) ) {
+			dir = true;
+			DeletaBloco(gBlocos, bloco);
+		}
+	}
+	return dir;
+}
+
+bool PontoNoBloco(int x, int y, int w, int z) {
+	
+	if ( (x >= w) && (x <= w + BLOCK_WIDTH) && 
+	   (y >= z) && (y <= z + BLOCK_HEIGHT) ) {
+		return true;
+	}
+	return false;
+}
+
+void DeletaBloco(BLOCK *gBlocos, int index) {
+	
+	gBlocos[index].vidas--;
+	
+	if (gBlocos[index].vidas == 0) {
+		gBlocos[index] = gBlocos[gNumBlocos-1];
+		gNumBlocos--; /*Quando for zero, iniciar novo nivel*/
+		gPontos += 100;
+		printf("Pontos: %d\n", gPontos);
+	}
+}
+
 int init() {
     /*Flag de inicializacao*/
     int success = true;
     srand(time(NULL));
 
     /*Inicializa o SDL*/
-    if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
+    if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER ) < 0 ) {
         printf( "Nao foi possivel inicializar SDL! SDL Error: %s\n", SDL_GetError() );
         success = false;
     }
@@ -390,7 +564,7 @@ int loadMedia() {
 }
 
 void closing() {
-    /*Libera a imagem carregada*/
+    /*Libera as imagens carregadas*/
     SDL_FreeSurface( gBALLSurface );
     gBALLSurface = NULL;
     SDL_FreeSurface ( gPADDLESurface );
@@ -432,29 +606,4 @@ SDL_Surface* loadSurface( char *path ) {
     }
 
     return optimizedSurface;
-}
-
-void criaBlocos(BLOCK *gBlocos) {
-	
-	SDL_Rect srcRectBlock, dstRectBlock;
-	int lin, col;
-	int i = 0;
-	
-	for (lin = 1; lin <= NUM_LINHAS; lin++) {
-		for (col = 1; col <= NUM_COLUNAS; col++) {
-			
-			gBlocos[i].image = gBLOCKSurface;
-			gBlocos[i].vidas = 1;
-			srcRectBlock.x = 0; srcRectBlock.y = 0;
-			gBlocos[i].posX = dstRectBlock.x = col*BLOCK_WIDTH - DIST_BLOCO_TELA;
-			gBlocos[i].posY = dstRectBlock.y = lin*BLOCK_HEIGHT - DIST_BLOCO_TELA/2;
-			gBlocos[i].imgW = srcRectBlock.w = BLOCK_WIDTH;
-			gBlocos[i].imgH = srcRectBlock.h = BLOCK_HEIGHT;
-			if( SDL_BlitSurface( gBlocos[i].image, &srcRectBlock, 
-								 gScreenSurface, &dstRectBlock ) < 0 ) {
-					printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
-			i++;
-			}
-		}
-	}
 }
