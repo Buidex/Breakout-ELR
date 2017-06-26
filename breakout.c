@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_mixer.h>
 #include <stdio.h>
 #include <time.h>
 
@@ -86,7 +87,6 @@ int gVelMaxBola; /*sem uso ainda*/
 int gTeclaDir;
 int gTeclaEsq;
 int gNumBlocos = 0;
-
 BLOCK gBlocos[NUM_BLOCOS];
 
 /*A janela em que estaremos renderizando*/
@@ -99,7 +99,7 @@ PADDLE plataforma;
 /*A superficie contida pela janela*/
 SDL_Surface* gScreenSurface = NULL;
 
-/*Imagem JPEG atualmente exibida*/
+/*Imagens PNG atualmente exibidas*/
 SDL_Surface* gBALLSurface = NULL;
 SDL_Surface* gPADDLESurface = NULL;
 SDL_Surface* gBLOCK1Surface = NULL;
@@ -107,6 +107,10 @@ SDL_Surface* gBLOCK2Surface = NULL;
 SDL_Surface* gBLOCK3Surface = NULL;
 SDL_Surface* gBLOCK4Surface = NULL;
 SDL_Surface* gBLOCK5Surface = NULL;
+
+/*Os efeitos sonoros que serao utilizados*/
+Mix_Chunk *efeitoParedes = NULL;
+Mix_Chunk *efeitoBlocos = NULL;
 
 /*
  * Prototipos de funcao
@@ -147,6 +151,8 @@ bool colisaoBolaBlocoBaixo(BALL a, BLOCK *gBlocos);
 bool colisaoBolaBlocoEsq(BALL a, BLOCK *gBlocos);
 bool colisaoBolaBlocoDir(BALL a, BLOCK *gBlocos);
 bool PontoNoBloco(int x, int y, int w, int z);
+
+/*Deleta blocos atingidos*/
 void DeletaBloco(BLOCK *gBlocos, int index);
 
 /*Muda o level*/
@@ -291,10 +297,12 @@ void moveBALL(BALL *p) {
     if ( (p->posX + BALL_WIDTH > SCREEN_WIDTH) || (p->posX < 0) ) {
         p->velX = -p->velX;
         p->posX += p->velX;
+        Mix_PlayChannel( -1, efeitoParedes, 0 );
     }
     if ( p->posY < 0 ){
         p->velY = -p->velY;
         p->posY += p->velY;
+        Mix_PlayChannel( -1, efeitoParedes, 0 );
     }
     
     if ( p->posY + BALL_HEIGHT > SCREEN_HEIGHT ) {
@@ -302,6 +310,7 @@ void moveBALL(BALL *p) {
 		p->velY = 0;
 		p->posX = SCREEN_WIDTH/2 - BALL_WIDTH/2;
 		p->posY = SCREEN_HEIGHT/2 - BALL_HEIGHT/2;
+		Mix_PlayChannel( -1, efeitoParedes, 0 );
 		gVidas--;
 		printf("Morreu! -1 vida\n");
 		printf("Vidas = %d\n", gVidas); /*print de teste*/
@@ -327,20 +336,24 @@ void moveBALL(BALL *p) {
 	
 	if (colisaoBolaBlocoCima(bola, gBlocos)) {
 		p->velY = -p->velY;
+		Mix_PlayChannel( -1, efeitoBlocos, 0 );
 		/*p->posY += BALL_WIDTH;*/
 	}
 		
 	if (colisaoBolaBlocoBaixo(bola, gBlocos)) {
 		p->velY = -p->velY;
+		Mix_PlayChannel( -1, efeitoBlocos, 0 );
 		/*p->posY -= BALL_WIDTH;*/
 	}
 	
 	if (colisaoBolaBlocoEsq(bola, gBlocos)) {
 		p->velX = -p->velX;
+		Mix_PlayChannel( -1, efeitoBlocos, 0 );
 		/*p->posX += BALL_WIDTH;*/
 	}
 	if (colisaoBolaBlocoDir(bola, gBlocos)) {
 		p->velX = -p->velX;
+		Mix_PlayChannel( -1, efeitoBlocos, 0 );
 		/*p->posX -= BALL_WIDTH;*/
 	}
 	if (gNumBlocos == 0) MudaLevel(&bola, &plataforma);	
@@ -575,10 +588,11 @@ void MudaLevel(BALL *a, PADDLE *b) {
 int init() {
     /*Flag de inicializacao*/
     int success = true;
+    atexit(SDL_Quit);
     srand(time(NULL));
 
-    /*Inicializa o SDL(video e timer)*/
-    if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER ) < 0 ) {
+    /*Inicializa o SDL(video, audio e timer)*/
+    if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER ) < 0 ) {
         printf( "Nao foi possivel inicializar SDL! SDL Error: %s\n", SDL_GetError() );
         success = false;
     }
@@ -600,6 +614,10 @@ int init() {
             else {
                 /*Recebe a superficie da janela*/
                 gScreenSurface = SDL_GetWindowSurface( gWindow );
+                
+                /*Inicializa o SDL_mixer*/
+                Mix_OpenAudio( MIX_DEFAULT_FREQUENCY , MIX_DEFAULT_FORMAT, 2, 1024 );
+				Mix_AllocateChannels( 16 );
             }
         }
     }
@@ -611,7 +629,7 @@ int loadMedia() {
     /*Flag de sucesso de carregamento*/
     int success = true;
     	
-    /*Carrega a superficie JPEG*/
+    /*Carrega as superficies PNG*/
     gBALLSurface = loadSurface( "./ballBlue.png" );
     gPADDLESurface = loadSurface( "./paddleRed.png" );
     gBLOCK1Surface = loadSurface( "./element_red_rectangle.png" );
@@ -626,7 +644,21 @@ int loadMedia() {
         gBLOCK5Surface == NULL ) {
         printf( "Falha ao carregar imagem! SDL Error: %s\n", SDL_GetError() );
         success = false;
-    } 
+    }
+    
+    /*Carrega os efeitos sonoros WAV*/
+    efeitoParedes = Mix_LoadWAV("tutu.wav");
+	if (!efeitoParedes) {
+		printf("Wav: SDL error=%s\n", SDL_GetError());
+		success = false;
+	}
+				
+	efeitoBlocos = Mix_LoadWAV("ta.wav");
+	if (!efeitoBlocos) {
+		printf("Wav: SDL error=%s\n", SDL_GetError());
+		success = false;
+	}
+	
     return success;
 }
 
@@ -646,6 +678,10 @@ void closing() {
     gBLOCK4Surface = NULL;
     SDL_FreeSurface ( gBLOCK5Surface );
     gBLOCK5Surface = NULL;
+    
+    /*Libera os efeitos sonoros*/
+    Mix_FreeChunk( efeitoParedes );
+    Mix_FreeChunk( efeitoBlocos );
 
     /*Destroi a janela*/
     SDL_DestroyWindow( gWindow );
@@ -653,6 +689,7 @@ void closing() {
 
     /*Encerra os subsistemas do SDL*/
     IMG_Quit();
+    Mix_CloseAudio();
     SDL_Quit();
 }
 
