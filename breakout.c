@@ -172,7 +172,7 @@ int main( int argc, char* args[] ) {
 			
             /*Cria os NPCs*/
             bola = criaBOLA(((SCREEN_WIDTH/2) - (BALL_WIDTH/2)),
-                             ((SCREEN_WIDTH/2) - (BALL_HEIGHT/2)), 
+                             ((SCREEN_HEIGHT/2) - (BALL_HEIGHT/2)), 
                              0, 
                              0,
                              gBALLSurface);
