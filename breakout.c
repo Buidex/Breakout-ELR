@@ -77,8 +77,9 @@ typedef struct _BLOCK {
 
 /* Variaveis globais */
 int gTimer;
-int gLevel = 1;
+int gLevel = 6;
 int gPontos = 0;
+int gContaPontos = 0;
 int gVidas;
 int gVelMinBola; /*sem uso ainda*/
 int gVelMaxBola; /*sem uso ainda*/
@@ -101,7 +102,11 @@ SDL_Surface* gScreenSurface = NULL;
 /*Imagem JPEG atualmente exibida*/
 SDL_Surface* gBALLSurface = NULL;
 SDL_Surface* gPADDLESurface = NULL;
-SDL_Surface* gBLOCKSurface = NULL;
+SDL_Surface* gBLOCK1Surface = NULL;
+SDL_Surface* gBLOCK2Surface = NULL;
+SDL_Surface* gBLOCK3Surface = NULL;
+SDL_Surface* gBLOCK4Surface = NULL;
+SDL_Surface* gBLOCK5Surface = NULL;
 
 /*
  * Prototipos de funcao
@@ -144,6 +149,9 @@ bool colisaoBolaBlocoDir(BALL a, BLOCK *gBlocos);
 bool PontoNoBloco(int x, int y, int w, int z);
 void DeletaBloco(BLOCK *gBlocos, int index);
 
+/*Muda o level*/
+void MudaLevel(BALL *a, PADDLE *b);
+
 int main( int argc, char* args[] ) {
 	
     SDL_Rect srcRect, dstRect;
@@ -175,10 +183,9 @@ int main( int argc, char* args[] ) {
 									VELOCIDADE_JOGADOR,
 									gPADDLESurface);
 			
+			gVidas = NUM_VIDAS;
 			
 			criaBlocos(gBlocos);
-			
-			gVidas = NUM_VIDAS;
              
             /*Flag do loop principal*/
             quit = false;
@@ -296,7 +303,9 @@ void moveBALL(BALL *p) {
 		p->posX = SCREEN_WIDTH/2 - BALL_WIDTH/2;
 		p->posY = SCREEN_HEIGHT/2 - BALL_HEIGHT/2;
 		gVidas--;
+		printf("Morreu! -1 vida\n");
 		printf("Vidas = %d\n", gVidas); /*print de teste*/
+		/*if (gVidas == 0) Game over!*/
 	}
 		
 	if (colisaoBolaPlat(bola, plataforma)) {
@@ -309,7 +318,7 @@ void moveBALL(BALL *p) {
 		
 		if ( p->velX > 0 && p->velX > VELOCIDADE_MAX_BOLA ) p->velX = VELOCIDADE_MAX_BOLA;
 		if ( p->velX < 0 && -(p->velX) > VELOCIDADE_MAX_BOLA ) p->velX = -(VELOCIDADE_MAX_BOLA);
-		printf("velX = %d\n", p->velX); /*print de teste*/
+		/*printf("velX = %d\n", p->velX);*/ /*print de teste*/
 		
 		p->velY = -p->velY;
 		p->posX += p->velX;
@@ -334,6 +343,7 @@ void moveBALL(BALL *p) {
 		p->velX = -p->velX;
 		/*p->posX -= BALL_WIDTH;*/
 	}
+	if (gNumBlocos == 0) MudaLevel(&bola, &plataforma);	
 }			
 
 void movePADDLE(PADDLE *p) {
@@ -392,17 +402,22 @@ void criaBlocos(BLOCK *gBlocos) {
 	for (lin = 1; lin <= NUM_LINHAS; lin++) {
 		for (col = 1; col <= NUM_COLUNAS; col++) {
 			
-			gBlocos[i].image = gBLOCKSurface;
-			gBlocos[i].vidas = 1;
+			if (gLevel == 1) gBlocos[i].vidas = gLevel;
+			if (i%2 == 0 && gLevel > 1 && gLevel < 6) gBlocos[i].vidas = gLevel-1;
+			if (i%2 == 1 && gLevel > 1 && gLevel < 6) gBlocos[i].vidas = gLevel;
+			if (gLevel >= 6) gBlocos[i].vidas = gLevel-1;
 			gBlocos[i].posX = col*BLOCK_WIDTH - DIST_BLOCO_TELA;
 			gBlocos[i].posY = lin*BLOCK_HEIGHT - DIST_BLOCO_TELA/2;
 			gBlocos[i].imgW = BLOCK_WIDTH;
 			gBlocos[i].imgH = BLOCK_HEIGHT;
-
 			i++;
 			gNumBlocos++;
 		}
 	}
+	printf("Level: %d\n", gLevel);
+	if (gLevel == 1) printf("Vidas: %d\n", gVidas);
+	printf("Pontos: %d\n", gPontos);
+	
 }
 
 void geraBlocos(BLOCK *gBlocos) {
@@ -417,6 +432,24 @@ void geraBlocos(BLOCK *gBlocos) {
 		srcRectBlock.h = gBlocos[i].imgH;
 		dstRectBlock.x = gBlocos[i].posX;
 		dstRectBlock.y = gBlocos[i].posY;
+		
+		switch (gBlocos[i].vidas) {
+			case 1:
+				gBlocos[i].image = gBLOCK1Surface;
+				break;
+			case 2:
+				gBlocos[i].image = gBLOCK2Surface;
+				break;
+			case 3:
+				gBlocos[i].image = gBLOCK3Surface;
+				break;
+			case 4:
+				gBlocos[i].image = gBLOCK4Surface;
+				break;
+			case 5:
+				gBlocos[i].image = gBLOCK5Surface;
+				break;
+		}
 				
 		if( SDL_BlitSurface( gBlocos[i].image, &srcRectBlock, 
 								gScreenSurface, &dstRectBlock ) < 0 ) {
@@ -504,10 +537,39 @@ void DeletaBloco(BLOCK *gBlocos, int index) {
 	
 	if (gBlocos[index].vidas == 0) {
 		gBlocos[index] = gBlocos[gNumBlocos-1];
-		gNumBlocos--; /*Quando for zero, iniciar novo nivel*/
+		gNumBlocos--;
 		gPontos += 100;
+		gContaPontos += 100;
+		if (gContaPontos == 10000) {
+			gContaPontos = 0;
+			gVidas++;
+			printf("%d pontos! +1 vida\n", gPontos);
+			printf("Vidas: %d\n", gVidas);
+		}
 		printf("Pontos: %d\n", gPontos);
 	}
+}
+
+void MudaLevel(BALL *a, PADDLE *b) {
+	
+	gLevel++;
+	a->velX = 0;
+	a->velY = 0;
+	a->posX = SCREEN_WIDTH/2 - BALL_WIDTH/2;
+	a->posY = SCREEN_HEIGHT/2 - BALL_HEIGHT/2;
+	b->posX = SCREEN_WIDTH/2 - PADDLE_WIDTH/2;
+	b->posY = SCREEN_HEIGHT - 2*PADDLE_HEIGHT;
+	gPontos += 1000;
+	printf("Passou de level! +1000 pontos\n");
+	gContaPontos += 1000;
+	if (gContaPontos == 10000) {
+		gContaPontos = 0;
+		gVidas++;
+		printf("%d pontos! +1 Vida\n", gPontos);
+		printf("Vidas: %d\n", gVidas);
+	}
+	gNumBlocos = 0;
+	criaBlocos(gBlocos);
 }
 
 int init() {
@@ -515,7 +577,7 @@ int init() {
     int success = true;
     srand(time(NULL));
 
-    /*Inicializa o SDL*/
+    /*Inicializa o SDL(video e timer)*/
     if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER ) < 0 ) {
         printf( "Nao foi possivel inicializar SDL! SDL Error: %s\n", SDL_GetError() );
         success = false;
@@ -552,9 +614,16 @@ int loadMedia() {
     /*Carrega a superficie JPEG*/
     gBALLSurface = loadSurface( "./ballBlue.png" );
     gPADDLESurface = loadSurface( "./paddleRed.png" );
-    gBLOCKSurface = loadSurface( "./element_red_rectangle.png" );
+    gBLOCK1Surface = loadSurface( "./element_red_rectangle.png" );
+    gBLOCK2Surface = loadSurface( "./element_yellow_rectangle.png" );
+    gBLOCK3Surface = loadSurface( "./element_blue_rectangle.png" );
+    gBLOCK4Surface = loadSurface( "./element_purple_rectangle.png" );
+    gBLOCK5Surface = loadSurface( "./element_green_rectangle.png" );
 	
-    if( gBALLSurface == NULL || gPADDLESurface == NULL || gBLOCKSurface == NULL ) {
+    if( gBALLSurface == NULL || gPADDLESurface == NULL ||
+        gBLOCK1Surface == NULL || gBLOCK2Surface == NULL ||
+        gBLOCK3Surface == NULL || gBLOCK4Surface == NULL ||
+        gBLOCK5Surface == NULL ) {
         printf( "Falha ao carregar imagem! SDL Error: %s\n", SDL_GetError() );
         success = false;
     } 
@@ -567,8 +636,16 @@ void closing() {
     gBALLSurface = NULL;
     SDL_FreeSurface ( gPADDLESurface );
     gPADDLESurface = NULL;
-    SDL_FreeSurface ( gBLOCKSurface );
-    gBLOCKSurface = NULL;
+    SDL_FreeSurface ( gBLOCK1Surface );
+    gBLOCK1Surface = NULL;
+    SDL_FreeSurface ( gBLOCK2Surface );
+    gBLOCK2Surface = NULL;
+    SDL_FreeSurface ( gBLOCK3Surface );
+    gBLOCK3Surface = NULL;
+    SDL_FreeSurface ( gBLOCK4Surface );
+    gBLOCK4Surface = NULL;
+    SDL_FreeSurface ( gBLOCK5Surface );
+    gBLOCK5Surface = NULL;
 
     /*Destroi a janela*/
     SDL_DestroyWindow( gWindow );
