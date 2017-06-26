@@ -1,0 +1,5 @@
+----Instruções----
+
+- Aperte a barra de espaço para iniciar o movimento da bola.
+- Use as setas da esquerda e da direita para movimentar a plataforma.
+- Destrua os blocos!
