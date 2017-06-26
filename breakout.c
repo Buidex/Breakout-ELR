@@ -77,7 +77,7 @@ typedef struct _BLOCK {
 
 /* Variaveis globais */
 int gTimer;
-int gLevel = 6;
+int gLevel = 1;
 int gPontos = 0;
 int gContaPontos = 0;
 int gVidas;
