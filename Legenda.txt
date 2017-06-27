@@ -1,0 +1,7 @@
+-Bloco Vermelho: Resistência 1
+-Bloco Amarelo:  Resistência 2
+-Bloco Azul:     Resistência 3
+-Bloco Roxo:     Resistência 4
+-Bloco Verde:    Resistência 5
+
+A resistência é o número de vezes que cada bloco deve ser atingido para ser destruído.
